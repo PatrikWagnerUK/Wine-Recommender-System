@@ -50,10 +50,11 @@ vectors = TfidfVectorizer(min_df = 3,
                          ngram_range = (1,3),
                          stop_words = 'english')
 
+#@st.cache
 vectors_matrix = vectors.fit_transform(predictors['description'])
 
 # ## Calculating Similarity
-
+@st.cache
 sig_kern = sigmoid_kernel(vectors_matrix, vectors_matrix)
 
 index = pd.Series(predictors.index, index=predictors['name']).drop_duplicates()
