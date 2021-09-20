@@ -24,7 +24,8 @@ from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 
 s3_file = S3FileSystem()
 @st.cache(allow_output_mutation=True)
-data = pickle.load(s3_file.open('{}/{}'.format('wineproj', 'wine_model.pkl')))
+#data = pickle.load(s3_file.open('{}/{}'.format('wineproj', 'wine_model.pkl')))
+data = pickle.load(s3_file.open('wineproj/wine_model.pkl'))
 
 with s3_file.open('wineproj/wine_pred_matrix.csv', 'rb') as f:
     predictors = pd.read_csv(f)
