@@ -24,11 +24,11 @@ from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 
 s3_file = S3FileSystem()
 @st.cache(allow_output_mutation=True)
-gurka = s3_file.open('{}/{}'.format('wineproj', 'wine_model.pkl'))
-data = pickle.load(gurka)
-
 with s3_file.open('wineproj/wine_pred_matrix.csv', 'rb') as f:
     predictors = pd.read_csv(f)
+
+with s3_file.open('wineproj/wine_model.pkl', 'rb') as p:
+    data = pickle.load(p)
 
 #data = load_model()
 sig_kern = data["model"]
