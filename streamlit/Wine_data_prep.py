@@ -1,46 +1,61 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
+import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 
-st.title('Wine Recommendation System 1.0')
 ## Importing and cleaning data
 
-#df = pd.read_csv('../../../Data/wine_data.csv')
 predictors = pd.read_csv('wine_pred_matrix.csv')
 
-country = st.sidebar.selectbox("Filter Wines by Country:", ("US", "Italy", "France", "Argentina", "Spain", "Australia", "Canada"))
+## Loading model from pickle file
+@st.cache(allow_output_mutation=True)
+def load_model():
+    with open('wine_model.pkl', 'rb') as file:
+        data = pickle.load(file)
+    return data
 
-filtered = predictors[(predictors['country'] == country)]
+data = load_model()
+sig_kern = data["model"]
 
-chosen_wine = st.selectbox("Select Wine:", filtered['name'])
-
-# ## Vectorizing With Tfidf
-
-vectors = TfidfVectorizer(min_df = 3,
-                         max_features = None,
-                         strip_accents = 'unicode',
-                         analyzer = 'word',
-                         token_pattern = '\w{2,}',
-                         ngram_range = (1,3),
-                         stop_words = 'english')
-
-vectors_matrix = vectors.fit_transform(predictors['description'])
-
-# ## Calculating Similarity
-
-sig_kern = st.cache(sigmoid_kernel(vectors_matrix, vectors_matrix))
-
-index = pd.Series(predictors.index, index=predictors['name']).drop_duplicates()
+## Creating function to display streamlit page
+def show_page():
+    st.title('Wine Recommendation System 1.0')
 
 def recommend_wine(sig_kern=sig_kern):
-    indx = index[chosen_wine]
+    country = st.sidebar.selectbox("Filter Wines by country:", ("US", "Italy", "France", "Argentina", "Spain", "Australia", "Canada"))
+    country_filtered = predictors[(predictors['country'] == country)]
+    variety = st.sidebar.selectbox("Filter Wines by variety:", np.unique(country_filtered['variety']))
+    variety_filtered = country_filtered[(country_filtered['variety'] == variety)]
+    #st.dataframe(variety_filtered[['name', 'variety']])
+    user_wine_input = st.selectbox('Recommend me a wine similar to the:', variety_filtered['name'].sort_values(ascending=True))
+
+
+    index = pd.Series(predictors.index, index=predictors['name']).drop_duplicates()
+    indx = index[user_wine_input]
     sigmoid_score = list(enumerate(sig_kern[indx]))
     sigmoid_score = sorted(sigmoid_score, key = lambda x:x[1], reverse = True)
     sigmoid_score = sigmoid_score[1:4]
     position = [i[0] for i in sigmoid_score]
-    return st.write(predictors.iloc[position])
 
-if st.button("Recommend Wine"):
-    st.write(f"Other wines to consider are: ", recommend_wine)
+    pd.set_option('display.max_colwidth', None)
+    if st.button("Recommend Wine"):
+        st.header(f"Other wines to consider are: ")
+
+        name1 = predictors[['name']].iloc[position[0]]
+        desc1 = predictors[['description']].iloc[position[0]]
+        st.subheader("The " + name1.to_string(header=False, index=False))
+        st.markdown(desc1.to_string(header=False, index=False))
+        st.markdown("____")
+
+        name2 = predictors[['name']].iloc[position[1]]
+        desc2 = predictors[['description']].iloc[position[1]]
+        st.subheader("The " + name2.to_string(header=False, index=False))
+        st.markdown(desc2.to_string(header=False, index=False))
+        st.markdown("____")
+
+        name3 = predictors[['name']].iloc[position[2]]
+        desc3 = predictors[['description']].iloc[position[2]]
+        st.subheader("The " + name3.to_string(header=False, index=False))
+        st.markdown(desc3.to_string(header=False, index=False))
