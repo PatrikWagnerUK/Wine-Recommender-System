@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import pickle
+import boto3
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 
@@ -10,13 +11,16 @@ from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 predictors = pd.read_csv('wine_pred_matrix.csv')
 
 ## Loading model from pickle file
-@st.cache(allow_output_mutation=True)
-def load_model():
-    with open('wine_model.pkl', 'rb') as file:
-        data = pickle.load(file)
-    return data
+#@st.cache(allow_output_mutation=True)
+#def load_model():
+#    with open('wine_model.pkl', 'rb') as file:
+#        data = pickle.load(file)
+#    return data
 
-data = load_model()
+s3 = boto3.resource('s3')
+data = pickle.loads(s3.Bucket("wineproj").Object("wine_model.pkl").get()['Body'].read())
+
+#data = load_model()
 sig_kern = data["model"]
 
 ## Creating function to display streamlit page
