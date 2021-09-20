@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 
 ## Importing and cleaning data
 
-predictors = pd.read_csv('wine_pred_matrix.csv')
+#predictors = pd.read_csv('wine_pred_matrix.csv')
 
 ## Loading model from pickle file
 #@st.cache(allow_output_mutation=True)
@@ -19,6 +19,8 @@ predictors = pd.read_csv('wine_pred_matrix.csv')
 
 s3 = boto3.resource('s3')
 data = pickle.loads(s3.Bucket("wineproj").Object("wine_model.pkl").get()['Body'].read())
+predictors = pd.read_csv(s3.Bucket("wineproj").Object("wine_pred_matrix.csv").get()['Body'].read())
+
 
 #data = load_model()
 sig_kern = data["model"]
