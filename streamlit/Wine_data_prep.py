@@ -3,6 +3,7 @@ import numpy as np
 import streamlit as st
 import pickle
 import boto3
+from s3fs.core import S3FileSystem
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 
@@ -17,11 +18,16 @@ from sklearn.metrics.pairwise import linear_kernel, sigmoid_kernel
 #        data = pickle.load(file)
 #    return data
 
-## keys for s3: aws_access_key_id=st.secrets["key_id"], aws_secret_access_key=st.secrets["secret_key"]
+#s3 = boto3.resource('s3', aws_access_key_id=st.secrets["key_id"], aws_secret_access_key=st.secrets["secret_key"])
+#data = pickle.loads(s3.Bucket("wineproj").Object("wine_model.pkl").get()['Body'].read())
+#predictors = pd.read_csv(s3.Bucket("wineproj").Object("wine_pred_matrix.csv").get()['Body'].read())
 
-s3 = boto3.resource('s3', aws_access_key_id=st.secrets["key_id"], aws_secret_access_key=st.secrets["secret_key"])
-data = pickle.loads(s3.Bucket("wineproj").Object("wine_model.pkl").get()['Body'].read())
-predictors = pd.read_csv(s3.Bucket("wineproj").Object("wine_pred_matrix.csv").get()['Body'].read())
+s3_file = S3FileSystem()
+@st.cache(allow_output_mutation=True)
+data = pickle.load(s3_file.open('{}/{}'.format('wineproj', 'wine_model.pkl')))
+
+with s3_file.open('wineproj/wine_pred_matrix.csv', 'rb') as f:
+    predictors = pd.read_csv(f)
 
 #data = load_model()
 sig_kern = data["model"]
